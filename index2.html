@@ -278,12 +278,12 @@
   <script>
     // --- Configuration ---
     const IMAGES = [
-      'photo.1.jpeg',
-      'photo.2.jpeg',
-      'photo.3.jpeg',
-      'photo.4.jpeg',
-      'photo.5.jpeg',
-      'photo.6.jpeg'
+      'https://raw.githubusercontent.com/shrouk-academy/sasoskty/sasosktty_birthday/photo.1.jpeg',
+      'https://raw.githubusercontent.com/shrouk-academy/sasoskty/sasosktty_birthday/photo.2.jpeg',
+      'https://raw.githubusercontent.com/shrouk-academy/sasoskty/sasosktty_birthday/photo.3.jpeg',
+      'https://raw.githubusercontent.com/shrouk-academy/sasoskty/sasosktty_birthday/photo.4.jpeg',
+      'https://raw.githubusercontent.com/shrouk-academy/sasoskty/sasosktty_birthday/photo.5.jpeg',
+      'https://raw.githubusercontent.com/shrouk-academy/sasoskty/sasosktty_birthday/photo.6.jpeg'
     ];
     const SLIDE_INTERVAL = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--slide-interval')) || 2000;
     const TRANSITION_MS = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--slide-duration')) || 600;
@@ -325,7 +325,7 @@
     // helper to fade one element out then in with new src
     function swapImage(el, newSrc) {
       // if same src, just ensure visible
-      if (el.src && el.src.endsWith(newSrc)) {
+      if (el.src && el.src.endsWith(newSrc.split('/').pop())) {
         el.classList.add('visible');
         return Promise.resolve();
       }

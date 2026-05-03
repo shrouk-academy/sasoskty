@@ -1,84 +1,548 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Clock - Multiple Time Zones</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <title>For sasosktty 💖</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --accent:#d2b48c;
+      --paper:#f5f5dc;
+      --bg1:#ff6b9d;
+      --bg2:#c44569;
+      --bg3:#f093fb;
+      --bg4:#ff9ff3;
+      --slide-duration: 600ms;   /* transition time for fades/scale */
+      --slide-interval: 2000;    /* 2000ms = 2 seconds between slides */
+    }
+
+    html,body{ height:100%; margin:0; font-family:'Poppins',sans-serif; }
+    body {
+      margin: 0;
+      background: linear-gradient(-45deg, var(--bg1), var(--bg2), var(--bg3), var(--bg4), var(--bg2));
+      background-size: 400% 400%;
+      color: #fff;
+      overflow: hidden;
+      text-align: center;
+      animation: gradientShift 12s ease infinite;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Start button */
+    #startBtn {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%);
+      padding: 14px 28px;
+      font-size: 20px;
+      background: linear-gradient(180deg,#ffd1e6,#ff9fc1);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      z-index: 900;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      color:#3a0b1e;
+    }
+
+    /* Stage: moved higher so images are visible and not cut */
+    #stage {
+      position: fixed;
+      left: 50%;
+      top: 52%;                 /* higher on the page so images are visible */
+      transform: translate(-50%,-18%); /* slight upward offset */
+      width: 94%;
+      max-width: 1400px;
+      height: 44vh;             /* tall enough for large images */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      padding: 1% 2%;
+      box-sizing: border-box;
+      gap: 18px;
+      z-index: 50;
+    }
+
+    /* Side columns: each contains a single large image */
+    .slide-column {
+      width: 30%;
+      height: 100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events: none;
+      position: relative;
+      overflow: visible; /* allow full image to be visible */
+    }
+
+    /* Single large image per side */
+    .side-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;       /* ensure full image visible, no cropping */
+      border-radius: 18px;
+      box-shadow: 0 28px 90px rgba(0,0,0,0.55);
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+      transition: opacity var(--slide-duration) ease, transform var(--slide-duration) ease;
+      pointer-events: none;
+      display:block;
+      background: rgba(0,0,0,0.04);
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
+    .side-img.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      z-index: 10;
+    }
+
+    /* Center panel (card + countdown + text) moved slightly up */
+    #center-panel {
+      position: fixed;
+      left: 50%;
+      top: 38%;                 /* moved up so card is higher on page */
+      transform: translate(-50%,-50%);
+      width: 42%;
+      max-width: 820px;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      pointer-events: auto;
+      gap: 14px;
+      z-index: 300;
+      text-align: center;
+    }
+
+    /* Countdown */
+    #countdown {
+      width: 100%;
+      pointer-events: auto;
+      color: #2b1b12;
+      text-align: center;
+    }
+    #countdown-label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #3a0b1e;
+      margin-bottom: 6px;
+    }
+    #countdown-timer {
+      display:flex;
+      gap:8px;
+      justify-content:center;
+      align-items:baseline;
+      flex-wrap:wrap;
+    }
+    .cd-part {
+      background: linear-gradient(180deg,#fff0f6,#ffe6ef);
+      border: 1px solid var(--accent);
+      padding: 8px 10px;
+      border-radius: 10px;
+      min-width: 56px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+      color:#3a0b1e;
+    }
+    .cd-value { font-weight:700; font-size:16px; display:block; }
+    .cd-unit { font-size:11px; display:block; margin-top:2px; color:#6b3b3b; }
+
+    /* Message card (centered) */
+    #text {
+      width: 100%;
+      font-size: 20px;
+      line-height: 1.6;
+      text-shadow: 1px 1px 4px rgba(0,0,0,0.45);
+      background: rgba(245,245,220,0.98);
+      color:#2b1b12;
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+      max-height: 320px;
+      overflow-y: auto;
+      z-index: 310;
+      pointer-events:auto;
+      text-align: center;       /* center the text */
+    }
+
+    /* Letter card centered and with open animation */
+    #letter {
+      width: 100%;
+      transform-style: preserve-3d;
+      font-size: 20px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.35);
+      background: var(--paper);
+      border: 2px solid var(--accent);
+      border-radius: 14px;
+      padding: 26px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+      max-height: 72vh;
+      overflow-y: auto;
+      display: none;
+      cursor: pointer;
+      transition: transform 0.45s ease, background 0.3s;
+      z-index: 600;
+      opacity: 0;
+      pointer-events:auto;
+      text-align: center;
+    }
+
+    /* initial closed state (small and rotated) */
+    #letter.card-closed {
+      transform: perspective(1000px) rotateX(80deg) scale(0.7);
+      opacity: 1;
+      display:block;
+    }
+
+    /* open animation: pop + rotate to flat */
+    @keyframes cardOpen {
+      0% { transform: perspective(1000px) rotateX(80deg) scale(0.7); opacity: 0; }
+      40% { transform: perspective(1000px) rotateX(20deg) scale(1.06); opacity: 1; }
+      70% { transform: perspective(1000px) rotateX(6deg) scale(0.98); }
+      100% { transform: perspective(1000px) rotateX(0deg) scale(1); opacity: 1; }
+    }
+
+    #letter.card-open {
+      animation: cardOpen 700ms cubic-bezier(.2,.9,.2,1) forwards;
+    }
+
+    #letter.letter-open {
+      transform: scale(1.02);
+      background: linear-gradient(180deg,#ffd1e6,#ff9fc1);
+    }
+
+    /* Hearts */
+    .heart { position: absolute; z-index: 5; pointer-events:none; user-select:none; animation: float 5s linear forwards; }
+    @keyframes float { 0% { transform: translateY(100vh) scale(0.6); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(-10vh) scale(1); opacity: 0; } }
+
+    /* Bubbles */
+    .bubble { position: absolute; bottom: 0; width: 20px; height: 20px; background: rgba(255,255,255,0.6); border-radius: 50%; animation: floatUp linear infinite; pointer-events: none; box-shadow: 0 0 10px rgba(255,255,255,0.8); z-index: 2; }
+    @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-100vh); opacity: 0; } }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      #center-panel { width: 86%; top: 40%; }
+      .slide-column { display:none; } /* hide side columns on smaller screens */
+      #stage { display:block; height:auto; top: 78%; transform: translate(-50%,-6%); }
+      #text { font-size: 18px; }
+    }
+    @media (max-width: 700px) {
+      #text { font-size: 16px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>World Clock</h1>
-        <p class="subtitle">Current Time in Different Time Zones</p>
-        
-        <div class="clocks-grid">
-            <div class="clock-card">
-                <div class="city-name">New York</div>
-                <div class="timezone">EST (UTC-5)</div>
-                <div class="digital-time" id="ny-time">00:00:00</div>
-                <div class="date" id="ny-date">--/--/----</div>
-            </div>
-            
-            <div class="clock-card">
-                <div class="city-name">London</div>
-                <div class="timezone">GMT (UTC+0)</div>
-                <div class="digital-time" id="london-time">00:00:00</div>
-                <div class="date" id="london-date">--/--/----</div>
-            </div>
-            
-            <div class="clock-card">
-                <div class="city-name">Paris</div>
-                <div class="timezone">CET (UTC+1)</div>
-                <div class="digital-time" id="paris-time">00:00:00</div>
-                <div class="date" id="paris-date">--/--/----</div>
-            </div>
-            
-            <div class="clock-card">
-                <div class="city-name">Dubai</div>
-                <div class="timezone">GST (UTC+4)</div>
-                <div class="digital-time" id="dubai-time">00:00:00</div>
-                <div class="date" id="dubai-date">--/--/----</div>
-            </div>
-            
-            <div class="clock-card">
-                <div class="city-name">Tokyo</div>
-                <div class="timezone">JST (UTC+9)</div>
-                <div class="digital-time" id="tokyo-time">00:00:00</div>
-                <div class="date" id="tokyo-date">--/--/----</div>
-            </div>
-            
-            <div class="clock-card">
-                <div class="city-name">Sydney</div>
-                <div class="timezone">AEST (UTC+10)</div>
-                <div class="digital-time" id="sydney-time">00:00:00</div>
-                <div class="date" id="sydney-date">--/--/----</div>
-            </div>
-            
-            <div class="clock-card">
-                <div class="city-name">Los Angeles</div>
-                <div class="timezone">PST (UTC-8)</div>
-                <div class="digital-time" id="la-time">00:00:00</div>
-                <div class="date" id="la-date">--/--/----</div>
-            </div>
-            
-            <div class="clock-card">
-                <div class="city-name">Singapore</div>
-                <div class="timezone">SGT (UTC+8)</div>
-                <div class="digital-time" id="singapore-time">00:00:00</div>
-                <div class="date" id="singapore-date">--/--/----</div>
-            </div>
-        </div>
-        
-        <div class="local-time-section">
-            <h2>Your Local Time</h2>
-            <div class="local-clock-card">
-                <div class="digital-time" id="local-time">00:00:00</div>
-                <div class="date" id="local-date">--/--/----</div>
-                <div class="timezone" id="local-timezone">Timezone</div>
-            </div>
-        </div>
+  <button id="startBtn" aria-label="Open your gift">Open your gift 🎁</button>
+
+  <div id="stage" aria-hidden="false">
+    <div class="slide-column" id="leftColumn">
+      <!-- single large image element per side -->
+      <img class="side-img" id="leftImg" src="" alt="left photo">
     </div>
-    
-    <script src="script.js"></script>
+
+    <div id="center-panel">
+      <div id="countdown" role="timer" aria-live="polite">
+        <div id="countdown-label">Countdown to your day</div>
+        <div id="countdown-timer">
+          <span class="cd-part"><span class="cd-value" id="cd-days">0</span><span class="cd-unit">Days</span></span>
+          <span class="cd-part"><span class="cd-value" id="cd-hours">00</span><span class="cd-unit">Hours</span></span>
+          <span class="cd-part"><span class="cd-value" id="cd-mins">00</span><span class="cd-unit">Minutes</span></span>
+          <span class="cd-part"><span class="cd-value" id="cd-secs">00</span><span class="cd-unit">Seconds</span></span>
+        </div>
+      </div>
+
+      <div id="text" role="status" aria-live="polite"></div>
+      <div id="letter" role="article" tabindex="0"></div>
+    </div>
+
+    <div class="slide-column" id="rightColumn">
+      <img class="side-img" id="rightImg" src="" alt="right photo">
+    </div>
+  </div>
+
+  <audio id="music" src="music.mp3" preload="auto"></audio>
+
+  <script>
+    // --- Configuration ---
+    const IMAGES = [
+      'images/photo.1.jpeg',
+      'images/photo.2.jpeg',
+      'images/photo.3.jpeg',
+      'images/photo.4.jpeg',
+      'images/photo.5.jpeg'
+    ];
+    const SLIDE_INTERVAL = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--slide-interval')) || 2000;
+    const TRANSITION_MS = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--slide-duration')) || 600;
+
+    // --- Elements ---
+    const startBtn = document.getElementById('startBtn');
+    const music = document.getElementById('music');
+    const leftImg = document.getElementById('leftImg');
+    const rightImg = document.getElementById('rightImg');
+    const textBox = document.getElementById('text');
+    const letter = document.getElementById('letter');
+
+    // messages and letter
+    const messages = [
+      "Happy Birthday sasosktty 💖",
+      "You make everything better ✨",
+      "I hope today is full of happiness 🎂",
+      "You deserve the whole world 🌍",
+      "Click anywhere after the cards start to open your letter 💌"
+    ];
+    const specialMessage = "ya saso enti aarfa innk f khayali w bali daiman w tol elwa2t bfkarr fyki ana aaref inn dh awel birthday lyki nkon feh together w sawa bs ana daiman atmana inno maykonsh elakherr w ykon kol elly gai feh ehna sawa w tfdly maaya daiman w mtb3desh aany lahza wahda aashan ana bhbk w hayatti mlhash taam mn gheerrk w mn gherr dhktk w sottk ana mn sa3tt ma 3rfttk w ana b2ytt shaifk my dream ; saso ana bhbk";
+
+    // state
+    let leftIndex = 0;
+    let rightIndex = 1; // ensure different initial images
+    let slideTimer = null;
+    let typingTimer = null;
+    let msgIndex = 0;
+    let letterOpened = false;
+    let reverseNext = false; // toggles which side fades first each tick
+
+    // preload images
+    IMAGES.forEach(src => { const i = new Image(); i.src = src; });
+
+    // set initial src but keep hidden
+    leftImg.src = IMAGES[leftIndex];
+    rightImg.src = IMAGES[rightIndex];
+
+    // helper to fade one element out then in with new src
+    function swapImage(el, newSrc) {
+      // if same src, just ensure visible
+      if (el.src && el.src.endsWith(newSrc)) {
+        el.classList.add('visible');
+        return Promise.resolve();
+      }
+      return new Promise(resolve => {
+        // fade out
+        el.classList.remove('visible');
+        // wait for transition to finish (slightly longer than CSS)
+        setTimeout(() => {
+          el.src = newSrc;
+          // small delay to allow browser to load and apply src
+          requestAnimationFrame(() => {
+            // fade in
+            el.classList.add('visible');
+            setTimeout(resolve, TRANSITION_MS + 20);
+          });
+        }, TRANSITION_MS / 2);
+      });
+    }
+
+    // show both current images (used at start)
+    function showInitial() {
+      leftImg.src = IMAGES[leftIndex];
+      rightImg.src = IMAGES[rightIndex];
+      // small delay then show
+      setTimeout(() => {
+        leftImg.classList.add('visible');
+        rightImg.classList.add('visible');
+      }, 60);
+    }
+
+    // main tick: advance indices and swap images; ensure left/right images are different
+    async function tickSlides() {
+      // compute next indices
+      leftIndex = (leftIndex + 1) % IMAGES.length;
+      // pick rightIndex different from leftIndex
+      rightIndex = (leftIndex + 1) % IMAGES.length;
+
+      // alternate which side updates first for a reversing effect
+      if (!reverseNext) {
+        await swapImage(leftImg, IMAGES[leftIndex]);
+        await swapImage(rightImg, IMAGES[rightIndex]);
+      } else {
+        await swapImage(rightImg, IMAGES[rightIndex]);
+        await swapImage(leftImg, IMAGES[leftIndex]);
+      }
+      reverseNext = !reverseNext;
+    }
+
+    // slideshow control
+    function startSlideshow() {
+      if (slideTimer) clearInterval(slideTimer);
+      slideTimer = setInterval(() => {
+        tickSlides().catch(()=>{});
+      }, SLIDE_INTERVAL);
+    }
+
+    // typing messages (center text) — synchronized but independent
+    function startTyping() {
+      if (typingTimer) clearInterval(typingTimer);
+      const current = messages[msgIndex % messages.length] || "";
+      let ch = 0;
+      textBox.textContent = "";
+      typingTimer = setInterval(() => {
+        textBox.textContent += current[ch] || '';
+        ch++;
+        if (ch >= current.length) {
+          clearInterval(typingTimer);
+          msgIndex++;
+          setTimeout(startTyping, 1200);
+        }
+      }, 36);
+    }
+
+    // open letter animation
+    function openLetter() {
+      textBox.style.display = 'none';
+      letter.style.display = 'block';
+      letter.className = 'card-closed';
+      letter.textContent = '';
+      setTimeout(() => letter.classList.add('card-open'), 40);
+      setTimeout(() => {
+        // hide side columns to focus on card
+        document.querySelectorAll('.slide-column').forEach(c => c.style.display = 'none');
+        letter.textContent = specialMessage;
+      }, 700);
+      letter.onclick = () => letter.classList.toggle('letter-open');
+    }
+
+    // floating images when letter open
+    function createFloatingImageAt(x, y) {
+      const img = document.createElement('img');
+      img.src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
+      img.style.position = 'absolute';
+      img.style.left = (x - 30) + 'px';
+      img.style.top = (y - 30) + 'px';
+      img.style.width = '60px';
+      img.style.height = '60px';
+      img.style.borderRadius = '50%';
+      img.style.objectFit = 'cover';
+      img.style.boxShadow = '0 8px 20px rgba(0,0,0,0.35)';
+      img.style.pointerEvents = 'none';
+      img.style.zIndex = 1200;
+      document.body.appendChild(img);
+      img.animate([
+        { transform: 'translateY(0) scale(0.9)', opacity: 1 },
+        { transform: 'translateY(-120px) scale(1.05)', opacity: 0 }
+      ], { duration: 3800, easing: 'ease-out' });
+      setTimeout(() => img.remove(), 4000);
+    }
+
+    // hearts & bubbles
+    function createHeart() {
+      const heartEmojis = ['❤️','💖','💕','💗','💓','💘'];
+      const colors = ['#ff6b9d','#c44569','#f093fb','#ff9ff3','#f368e0'];
+      const h = document.createElement('div');
+      h.className = 'heart';
+      h.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+      h.style.left = Math.random() * 100 + 'vw';
+      h.style.fontSize = (Math.random() * 22 + 12) + 'px';
+      h.style.color = colors[Math.floor(Math.random() * colors.length)];
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 5200);
+    }
+    function createBubble() {
+      const b = document.createElement('div');
+      b.className = 'bubble';
+      b.style.left = Math.random() * 100 + 'vw';
+      const size = Math.random() * 30 + 10;
+      b.style.width = size + 'px';
+      b.style.height = size + 'px';
+      const r = Math.floor(Math.random()*256), g = Math.floor(Math.random()*256), bl = Math.floor(Math.random()*256);
+      b.style.background = `rgba(${r}, ${g}, ${bl}, 0.6)`;
+      b.style.animationDuration = (Math.random() * 5 + 5) + "s";
+      document.body.appendChild(b);
+      setTimeout(() => b.remove(), 10000);
+    }
+
+    // countdown to May 4 at 00:00 local time
+    (function initCountdown(){
+      function nextOccurrence(month, day, hour = 0, minute = 0) {
+        const now = new Date();
+        let year = now.getFullYear();
+        const candidate = new Date(year, month - 1, day, hour, minute, 0);
+        if (candidate <= now) candidate.setFullYear(year + 1);
+        return candidate;
+      }
+      const targetDate = nextOccurrence(5, 4, 0, 0);
+      const elDays = document.getElementById('cd-days');
+      const elHours = document.getElementById('cd-hours');
+      const elMins = document.getElementById('cd-mins');
+      const elSecs = document.getElementById('cd-secs');
+      const label = document.getElementById('countdown-label');
+
+      function pad(n){ return String(n).padStart(2,'0'); }
+
+      function update(){
+        const now = new Date();
+        let diff = Math.max(0, targetDate - now);
+        const sec = 1000, min = 60*sec, hr = 60*min, day = 24*hr;
+        const days = Math.floor(diff / day); diff -= days*day;
+        const hours = Math.floor(diff / hr); diff -= hours*hr;
+        const mins = Math.floor(diff / min); diff -= mins*min;
+        const secs = Math.floor(diff / sec);
+
+        if (elDays) elDays.textContent = days;
+        if (elHours) elHours.textContent = pad(hours);
+        if (elMins) elMins.textContent = pad(mins);
+        if (elSecs) elSecs.textContent = pad(secs);
+
+        if (targetDate - now <= 0) {
+          clearInterval(countdownInterval);
+          if (label) label.textContent = "It's here — open your gift!";
+          if (!letterOpened) {
+            setTimeout(() => { openLetter(); letterOpened = true; }, 600);
+          }
+        }
+      }
+      update();
+      const countdownInterval = setInterval(update, 1000);
+    })();
+
+    // start everything when user clicks
+    startBtn.addEventListener('click', () => {
+      startBtn.style.display = 'none';
+      music.currentTime = 0;
+      music.play().catch(()=>{ /* ignore autoplay block */ });
+
+      // show initial images and start slideshow
+      showInitial();
+      startSlideshow();
+      startTyping();
+
+      // decorative effects
+      setInterval(createHeart, 350);
+      setInterval(createBubble, 1000);
+
+      // click behavior: first click opens letter, subsequent clicks spawn floating images
+      document.body.addEventListener('click', (e) => {
+        if (e.target === startBtn) return;
+        if (!letterOpened) {
+          openLetter();
+          letterOpened = true;
+          return;
+        }
+        if (letterOpened && !letter.contains(e.target)) {
+          createFloatingImageAt(e.clientX, e.clientY);
+          createFloatingImageAt(window.innerWidth - e.clientX, e.clientY);
+        }
+      }, { once: false });
+    }, { once: true });
+
+    // ensure left/right images are different at start
+    if (leftIndex === rightIndex) rightIndex = (leftIndex + 1) % IMAGES.length;
+
+    // expose functions for debugging (optional)
+    window._debug = {
+      IMAGES, SLIDE_INTERVAL, TRANSITION_MS
+    };
+  </script>
 </body>
 </html>
